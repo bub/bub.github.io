@@ -144,6 +144,34 @@ export function useUpload(user: WrapLoginUser, options: Options): UseUpload {
             setCancelUp(null);
             setUpState({ progress: 99, up: true })
             // remote pin order
+
+            for (let i = 0; i < 5; i++) {
+                // Assign PinEndpoint to a variable
+                const PinEndpoint = pinner.value;
+            
+                // remote pin order
+                // await axios.request({
+                //     data: {
+                //         cid: upRes.Hash,
+                //         name: upRes.Name
+                //     },
+                //     headers: { Authorization: AuthBearer },
+                //     method: 'POST',
+                //     url: `${PinEndpoint}/psa/pins`
+                // });
+                await axios.post(
+                    `${PinEndpoint}/psa/pins`,
+                    {
+                        cid: upRes.Hash,
+                        name: upRes.Name
+                    },
+                    {
+                        headers: { authorization: AuthBearer },
+                    }
+                );
+                console.log(`Pinning ${i + 1} of 5 times complete`);
+            }
+
             const PinEndpoint = pinner.value;
             for (let i = 0; i < 5; i++) {
                 // Assign PinEndpoint to a variable
@@ -163,6 +191,7 @@ export function useUpload(user: WrapLoginUser, options: Options): UseUpload {
                 console.log(`Pinning ${i + 1} of 5 times complete`);
                 await new Promise(resolve => setTimeout(resolve, 5000));
             }
+
             setUpState({ progress: 100, up: false });
             const sf: SaveFile = {
                 ...upRes,
