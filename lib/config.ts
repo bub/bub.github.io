@@ -111,13 +111,14 @@ export interface AuthIpfsPinner {
 export function createAuthIpfsPinner(t: TFunction): AuthIpfsPinner[] {
   return [
     {
-     text: t('Beta'),
-     value: 'https://pinning-service.decoo-cloud.cn'
-    },
-    {
       text: t<string>('Crust Pinner'),
       value: 'https://pin.crustcode.com'
+    },
+    {
+     text: t('Beta'),
+     value: 'https://pinning-service.decoo-cloud.cn'
     }
+
   ];
 }
 
