@@ -144,9 +144,10 @@ export function useUpload(user: WrapLoginUser, options: Options): UseUpload {
             setCancelUp(null);
             setUpState({ progress: 99, up: true })
             // remote pin order
+            const PinEndpoint = pinner.value;
             for (let i = 0; i < 5; i++) {
                 // Assign PinEndpoint to a variable
-                const PinEndpoint = pinner.value;
+                
             
                 // remote pin order
                 await axios.request({
