@@ -1,8 +1,7 @@
 import classNames from 'classnames';
-import Web3 from "web3";
 import FileSaver from 'file-saver';
 import { useRouter } from 'next/router';
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Accordion, AccordionContent, AccordionTitle, Segment } from "semantic-ui-react";
 import styled from "styled-components";
@@ -18,23 +17,6 @@ import { useToggle } from "../../lib/hooks/useToggle";
 import { ExportObj, SaveFile } from "../../lib/types";
 import { useFilesInfo } from '../../lib/useFilesInfo';
 import { useFiles, WalletName } from "../../lib/wallet/hooks";
-import { AllDownloadGateways, useDownloadGateway } from '../../lib/hooks/useDownloadGateway';
-import MDropdown from '../../components/MDropdown';
-
-export const StorageChainConfig = {
-  chainId: '0x5afe',
-  chainName: 'Oasis Sapphire',
-  nativeCurrency: {
-    name: 'ROSE',
-    symbol: 'ROSE',
-    decimals: 18,
-  },
-  rpcUrls: ['https://sapphire.oasis.io/'],
-  blockExplorerUrls: ['https://explorer.sapphire.oasis.io'],
-}
-const StorageSecretsABI = [{ "type": "function", "stateMutability": "nonpayable", "outputs": [], "name": "createSecret", "inputs": [{ "type": "string", "name": "name", "internalType": "string" }, { "type": "bytes", "name": "secret", "internalType": "bytes" }] }, { "type": "function", "stateMutability": "view", "outputs": [{ "type": "bytes", "name": "", "internalType": "bytes" }], "name": "revealSecret", "inputs": [{ "type": "string", "name": "name", "internalType": "string" }] }, { "type": "event", "name": "SecretCreated", "inputs": [{ "type": "address", "name": "creator", "indexed": true }, { "type": "uint256", "name": "index", "indexed": false }], "anonymous": false }];
-const StorageSecretsAddress = "0x744772c372ea818C0779148CF215C0C642053Ee6";
-
 export interface Props {
   className?: string
 }
@@ -45,7 +27,6 @@ function Index(props: Props) {
   const { className } = props
   const { t } = useTranslation()
   const uc = useUserCrypto()
-  const dg = useDownloadGateway()
   const r = useRouter()
   const { alert } = useContext(AppContext)
   const [open, toggleOpen] = useToggle(false)
@@ -61,7 +42,8 @@ function Index(props: Props) {
   }, [user, isPremiumUser])
   const isCrust = user.wallet === 'crust'
   const wFiles = useFiles();
-  const { publicCount, publicSize, valutCount, valutSize } = useFilesInfo(wFiles);
+  const { publicCount, publicSize, valutCount, valutSize} = useFilesInfo(wFiles);
+  console.log('user::', user)
 
   const importInputRef = useRef<HTMLInputElement>(null);
   const _clickImport = useCallback(() => {
@@ -133,116 +115,6 @@ function Index(props: Props) {
     FileSaver.saveAs(blob, 'backup.json');
   }, [wFiles, uc]);
 
-
-  const _clickUpload = useCallback(async () => {
-    if (uc.secret) {
-      let injectedProvider = false;
-      if (typeof window.ethereum !== 'undefined') {
-        injectedProvider = true
-      }
-      const isMetaMask = injectedProvider ? window.ethereum.isMetaMask : false
-
-      if (isMetaMask) {
-        await window.ethereum.enable();
-        if (await changeToOasis()) {
-          const web3 = new Web3(window.ethereum);
-          const storageSecretsContract = new web3.eth.Contract(StorageSecretsABI as any, StorageSecretsAddress);
-          const sig = await web3.eth.personal.sign("secret", window.ethereum.selectedAddress, "123456");
-          alert.info("Please wait patiently for upload (about 30s)...");
-          await storageSecretsContract.methods.createSecret(sig.substring(2, 12), Buffer.from(uc.secret)).send({ from: window.ethereum.selectedAddress, });
-          alert.info("Your secret key has been uploaded to the Oasis network");
-        } else {
-          alert.error("Change to Oasis error");
-        }
-      } else {
-        alert.error("Please make sure you have install Metamask");
-      }
-    } else {
-      alert.error("You don't have any secret to upload");
-    }
-  }, [uc]);
-
-  const _clickDownload = useCallback(async () => {
-    let injectedProvider = false;
-    if (typeof window.ethereum !== 'undefined') {
-      injectedProvider = true
-    }
-    const isMetaMask = injectedProvider ? window.ethereum.isMetaMask : false
-
-    if (isMetaMask) {
-      await window.ethereum.enable();
-      if (await changeToOasis()) {
-        const web3 = new Web3(window.ethereum);
-        const storageSecretsContract = new web3.eth.Contract(StorageSecretsABI as any, StorageSecretsAddress);
-        console.log(window.ethereum.selectedAddress)
-        const sig = await web3.eth.personal.sign("secret", window.ethereum.selectedAddress, "123456");
-        const secret = await storageSecretsContract.methods.revealSecret(sig.substring(2, 12)).call();
-        if (secret !== null && secret !== "") {
-          const trueSecret = Buffer.from(secret.slice(2), 'hex').toString();
-          console.log(trueSecret);
-          const userCrypto = parseUserCrypto(trueSecret)
-          if (userCrypto) {
-            uc.set(userCrypto)
-          }
-        } else {
-          alert.error("You don't have any secrets on Oasis");
-        }
-      } else {
-        alert.error("Change to Oasis error");
-      }
-    } else {
-      alert.error("Please make sure you have install Metamask");
-    }
-  }, [uc]);
-
-  async function changeToOasis(): Promise<boolean> {
-    const request = (window.ethereum).request;
-    const chainId = await request({ method: "eth_chainId" });
-    console.log(`chainId:${chainId}`);
-    if (chainId !== StorageChainConfig.chainId) {
-      try {
-        await request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: StorageChainConfig.chainId }],
-        });
-      } catch (err) {
-        console.log(err);
-        if (err.code === 4902) {
-          try {
-            await request({
-              method: "wallet_addEthereumChain",
-              params: [StorageChainConfig],
-            });
-            return await request({ method: "eth_chainId" }) == StorageChainConfig.chainId;
-          } catch (addError) {
-            console.error(addError);
-            return false;
-          }
-        } else {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  const _onDowloadGateChange = useCallback((_, { value }) => {
-    dg.set(value)
-  }, [])
-
-  const [tempDownloadGateway, setTempDownloadGateway] = useState<string>("")
-  const _onChangeInputDownloadGateway = (e) => {
-    setTempDownloadGateway(e.target.value)
-  }
-
-  const _OnSaveDownloadGateway = () => {
-    if (tempDownloadGateway == null || tempDownloadGateway == "") {
-      alert.error("Please give right gateway");
-      return;
-    }
-    dg.set(tempDownloadGateway)
-  }
-
   return <PageUserSideLayout path={'/setting'} className={className}>
     <input
       onChange={_onInputImportFile}
@@ -291,33 +163,6 @@ function Index(props: Props) {
     </Segment>
     <Segment basic className={"mcard"}>
       <div className="title font-sans-semibold">
-        {t('IPFS Gateway settings for download')}
-      </div>
-      <div className="text font-sans-regular">
-        {`${t('Default gateway:')} `}
-        <span className="bold-text font-sans-semibold">{dg.gateway}</span>
-      </div>
-
-      <div className="text font-sans-regular">
-        {`${t('Select a gateway from community contribution:')} `}
-        <SelectDownloadGatewayDropdown
-          icon={<span className="dropdown icon" />}
-          options={AllDownloadGateways}
-          onChange={_onDowloadGateChange}
-        />
-      </div>
-
-      <div className="text font-sans-regular">Customized:</div>
-      <input
-        className='input-dowload-gateway'
-        spellCheck="false"
-        onChange={_onChangeInputDownloadGateway}
-        placeholder={t('Customize your download gateway')}
-      />
-      <Btn content={t('Save')} style={{ height: 25, lineHeight: '0px' }} onClick={_OnSaveDownloadGateway} />
-    </Segment>
-    <Segment basic className={"mcard"}>
-      <div className="title font-sans-semibold">
         {t('Developer Profile')}
       </div>
       <div className="text font-sans-regular">
@@ -328,13 +173,13 @@ function Index(props: Props) {
       </div>
     </Segment>
     <Segment basic className={"mcard"}>
-      <div className="title font-sans-semibold">
+      {/* <div className="title font-sans-semibold">
         {t('User Data Management')}
       </div>
       <div className="text font-sans-regular">
         {`${t('Your user data (including three File Lists and one File Encryption Key) are cached on your local devices. If you want to migrate your user data to a new device, use Export & Import function.')} `}
-        <span style={{ color: '#f47e6b' }}>Attention Please! If you want to switch device or explorer, please follow the following steps: 1) Export your user data from old device/explorer. 2) Log in to Crust Files in your new device/explorer. 3) Import the user data. 4) Enjoy Crust Files! PS: Another way you can spend some ROSE tokens to safely and securely store your private keys on the Oasis sapphire network</span>
-      </div>
+        <span style={{ color: '#f47e6b' }}>Attention Please! If you want to switch device or explorer, please follow the following steps: 1) Export your user data from old device/explorer. 2) Log in to Crust Files in your new device/explorer. 3) Import the user data. 4) Enjoy Crust Files!</span>
+      </div> */}
       <Accordion>
         <AccordionTitle active={showFileEncryption} onClick={() => toggleFileEncryption()}>
           <div className="title font-sans-semibold">
@@ -366,47 +211,11 @@ function Index(props: Props) {
       <div className={'btns'}>
         <Btn content={t('Export')} onClick={_clickExport} />
         <Btn content={t('Import')} onClick={_clickImport} />
-        <Btn content={t('Upload key to Oasis')} onClick={_clickUpload} />
-        <Btn content={t('Download key from Oasis')} onClick={_clickDownload} />
       </div>
     </Segment>
     <BindAirdrop />
   </PageUserSideLayout>
 }
-
-const SelectDownloadGatewayDropdown = styled(MDropdown)`
-    &.mdropdown {
-      display: inline-block;
-      vertical-align: top;
-      width: 230px !important;
-      border-radius: 8px !important;
-      border: 1px solid #999999 !important;
-      margin-right: 8px !important;
-      line-height: 25px;
-      height: 25px;
-      padding: 0 30px 0 14px;
-      .text {
-        white-space: nowrap;
-        font-size: 14 !important;
-        line-height: 25px !important;
-        font-weight: 500 !important;
-        color: var(--main-color) !important;
-        font-family: OpenSans-SemiBold !important;
-      }
-      .dropIcon {
-        position: absolute;
-        right: 11px;
-        top: 6px;
-      }
-
-      .options {
-        .item {
-          line-height: 24px;
-          padding: 4px 20px;
-        }
-      }
-    }
-`
 
 export default React.memo<Props>(styled(Index)`
   .pusl_center_flex_content {
@@ -453,28 +262,8 @@ export default React.memo<Props>(styled(Index)`
 
     .btns {
       margin-top: 1.7rem;
-      button: {
+      button:first-child {
         margin-right: 1rem;
-      }
-    }
-
-    .input-dowload-gateway {
-      vertical-align: top;
-      display: inline-block;
-      min-width: 406px;
-      margin-bottom: 12px;
-      margin-right: 12px;
-      height: 25px;
-      line-height: 25px;
-      border: 1px solid #999999;
-      font-family: OpenSans-Regular;
-      outline: unset;
-      border-radius: 8px;
-      padding-left: 16px;
-      padding-right: 16px;
-      font-size: 10px;
-      &::placeholder{
-        color: #999999;
       }
     }
   }
