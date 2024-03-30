@@ -161,6 +161,7 @@ export function useUpload(user: WrapLoginUser, options: Options): UseUpload {
                 });
             
                 console.log(`Pinning ${i + 1} of 5 times complete`);
+                await new Promise(resolve => setTimeout(resolve, 5000));
             }
             setUpState({ progress: 100, up: false });
             const sf: SaveFile = {
