@@ -1,36 +1,29 @@
-const repoName = 'bub.github.io';
+import type { NextConfig } from "next";
 
-const nextMdx = require('@next/mdx')({
-  extension: /\.(md|mdx)$/,
-  options: {
-    remarkPlugins: [require('remark-gfm')],
-    rehypePlugins: [],
-  },
-});
+const nextConfig: NextConfig = {
+  /**
+   * Enable static exports.
+   *
+   * @see https://nextjs.org/docs/app/building-your-application/deploying/static-exports
+   */
+  output: "export",
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  basePath: `/${repoName}`,
-  assetPrefix: `/${repoName}/`,
-  trailingSlash: true,
-  output: 'export',
-  pageExtensions: ['tsx', 'ts', 'js', 'jsx', 'md', 'mdx'],
-  experimental: {
-    styledComponents: true,
-  },
-  webpack: (config) => {
-    config.resolve.fallback = {
-      crypto: require.resolve('crypto-browserify'),
-      path: require.resolve('path-browserify'),
-      stream: require.resolve('stream-browserify'),
-      https: require.resolve('https-browserify'),
-      http: require.resolve('stream-http'),
-      os: false,
-      assert: false,
-      fs: false,
-    };
-    return config;
+  /**
+   * Set base path. This is the slug of your GitHub repository.
+   *
+   * @see https://nextjs.org/docs/app/api-reference/next-config-js/basePath
+   */
+  basePath: "/nextjs-github-pages",
+
+  /**
+   * Disable server-based image optimization. Next.js does not support
+   * dynamic features with static exports.
+   *
+   * @see https://nextjs.org/docs/app/api-reference/components/image#unoptimized
+   */
+  images: {
+    unoptimized: true,
   },
 };
 
-module.exports = nextMdx(nextConfig);
+export default nextConfig;
