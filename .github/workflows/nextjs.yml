@@ -1,8 +1,10 @@
+# .github/workflows/deploy.yml
+
 name: Deploy Next.js site to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   workflow_dispatch:
 
 permissions:
@@ -11,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: true
 
 jobs:
@@ -19,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Node.js
@@ -30,13 +32,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js site
+      - name: Build Next.js app
         run: npm run build
 
       - name: Export static site
         run: npm run export
 
-      - name: Upload static files
+      - name: Upload static site to Pages
         uses: actions/upload-pages-artifact@v1
         with:
           path: out
