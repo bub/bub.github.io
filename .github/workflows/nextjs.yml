@@ -49,17 +49,13 @@ jobs:
           static_site_generator: next
 
       - name: Restore cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             .next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
-
-      - name: Force Yarn to use official registry (if using yarn)
-        if: steps.detect-package-manager.outputs.manager == 'yarn'
-        run: yarn config set registry https://registry.yarnpkg.com
 
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
@@ -71,8 +67,9 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.runner }} next export
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
+          name: nextjs-export
           path: ./out
 
   deploy:
@@ -82,6 +79,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-export
+          path: ./out
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
