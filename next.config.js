@@ -1,6 +1,6 @@
-const nextMdx = require('@next/mdx');
+const repoName = 'bub.github.io';
 
-const withMDX = nextMdx({
+const nextMdx = require('@next/mdx')({
   extension: /\.(md|mdx)$/,
   options: {
     remarkPlugins: [require('remark-gfm')],
@@ -8,14 +8,13 @@ const withMDX = nextMdx({
   },
 });
 
-/**
- * @type {import('next').NextConfig}
- */
-const nextConfig = withMDX({
-  output: 'export', // 👈 Enable static export for GitHub Pages
-  basePath: '/bub.github.io', // 👈 Replace with your actual repo name
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  basePath: `/${repoName}`,
+  assetPrefix: `/${repoName}/`,
   trailingSlash: true,
-  pageExtensions: ['tsx', 'md', 'mdx'],
+  output: 'export',
+  pageExtensions: ['tsx', 'ts', 'js', 'jsx', 'md', 'mdx'],
   experimental: {
     styledComponents: true,
   },
@@ -32,6 +31,6 @@ const nextConfig = withMDX({
     };
     return config;
   },
-});
+};
 
-module.exports = nextConfig;
+module.exports = nextMdx(nextConfig);
