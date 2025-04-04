@@ -1,6 +1,4 @@
-# Sample workflow for building and deploying a Next.js site to GitHub Pages
-
-name: Deploy Next.js site to Pages
+name: Deploy Next.js site to GitHub Pages
 
 on:
   push:
@@ -23,6 +21,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Reset Yarn registry (fix nlark error)
+        run: |
+          yarn config set registry https://registry.npmjs.org --global
+          echo 'YARN_NPM_REGISTRY_SERVER=https://registry.npmjs.org' >> $GITHUB_ENV
+          echo 'NODE_OPTIONS=--dns-result-order=ipv4first' >> $GITHUB_ENV
+
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -37,21 +41,14 @@ jobs:
           else
             echo "Unable to determine package manager"
             exit 1
-          fi
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
 
-      - name: Force Yarn to use correct registry
-        if: ${{ steps.detect-package-manager.outputs.manager == 'yarn' }}
-        run: |
-          yarn config delete registry || true
-          yarn config set registry https://registry.npmjs.org
-
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
 
       - name: Restore cache
