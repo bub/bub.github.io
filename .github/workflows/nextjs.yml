@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-   build:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -38,7 +38,7 @@ jobs:
             echo "command=ci" >> $GITHUB_OUTPUT
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
           else
-            echo "Unablee to determine package manager"
+            echo "Unable to determine package manager"
             exit 1
           fi
 
@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
-          
+
   deploy:
     environment:
       name: github-pages
