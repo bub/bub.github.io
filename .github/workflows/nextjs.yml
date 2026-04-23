@@ -38,8 +38,9 @@ jobs:
             echo "command=ci" >> $GITHUB_OUTPUT
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
           else
-            echo "Unable to determine package manager"
-            exit 1
+            echo "manager=yarn" >> $GITHUB_OUTPUT
+            echo "command=install" >> $GITHUB_OUTPUT
+            echo "runner=yarn" >> $GITHUB_OUTPUT
           fi
 
       - name: Setup Node
