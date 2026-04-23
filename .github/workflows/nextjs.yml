@@ -15,18 +15,16 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Rewrite nlark registry in lockfile
+      - name: Remove corrupted lockfile
         run: |
-          if [ -f yarn.lock ]; then
-            sed -i 's|https://registry.nlark.com|https://registry.npmjs.org|g' yarn.lock
-            echo "Rewrote nlark.com URLs to npmjs.org"
-          fi
+          rm -f yarn.lock
+          echo "Removed yarn.lock to regenerate from npmjs.org"
 
       - name: Detect package manager
         id: detect-package-manager
@@ -75,7 +73,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
-
+          
   deploy:
     environment:
       name: github-pages
